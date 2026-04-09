@@ -512,7 +512,9 @@ return (
     <div>
       <div className="text-muted-foreground">Load Time</div>
       <div className="font-semibold">
-        {latest.load_ms ? `${latest.load_ms}ms` : "--"}
+        {latest.load_ms !== null && latest.load_ms !== undefined
+  ? `${latest.load_ms}ms`
+  : "--"}
       </div>
     </div>
 
@@ -520,7 +522,9 @@ return (
     <div>
       <div className="text-muted-foreground">TTFB</div>
       <div className="font-semibold">
-        {latest.ttfb_ms ? `${latest.ttfb_ms}ms` : "--"}
+        {latest.ttfb_ms !== null && latest.ttfb_ms !== undefined
+  ? `${latest.ttfb_ms}ms`
+  : "--"}
       </div>
     </div>
 
@@ -528,9 +532,9 @@ return (
     <div>
       <div className="text-muted-foreground">Page Size</div>
       <div className="font-semibold">
-        {latest.page_bytes
-          ? `${(latest.page_bytes / 1024).toFixed(1)} KB`
-          : "--"}
+        {latest.page_bytes !== null && latest.page_bytes !== undefined
+  ? `${(latest.page_bytes / 1024).toFixed(1)} KB`
+  : "--"}
       </div>
     </div>
 
@@ -538,7 +542,9 @@ return (
     <div>
       <div className="text-muted-foreground">Requests</div>
       <div className="font-semibold">
-        {latest.requests_count ?? "--"}
+       {latest.requests_count !== null && latest.requests_count !== undefined
+  ? latest.requests_count
+  : "--"}
       </div>
     </div>
 
