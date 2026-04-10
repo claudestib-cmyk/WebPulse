@@ -254,8 +254,10 @@ export function ReportsPage({ onBack }: ReportsPageProps) {
         if (checksRes.error) throw checksRes.error;
         if (incidentsRes.error) throw incidentsRes.error;
         if (perfRes.error) throw perfRes.error;
-console.log("perfRes.data:", perfRes.data);
-console.log("perfRes.error:", perfRes.error);
+
+        console.log("perfRes.data:", perfRes.data);
+        console.log("perfRes.error:", perfRes.error);
+
         if (cancelled) return;
 
         setSites((sitesRes.data as SiteRow[]) ?? []);
@@ -300,6 +302,24 @@ console.log("perfRes.error:", perfRes.error);
       .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
     if (!scores.length) return null;
     return (scores.reduce((a, b) => a + b, 0) / scores.length) * 100;
+  }, [dailyPerf]);
+
+  const latestSnapshot = useMemo(() => {
+    if (!dailyPerf.length) return null;
+
+    const latestWithCoreMetrics = dailyPerf.find(
+      (row) =>
+        row.load_ms !== null &&
+        row.load_ms !== undefined ||
+        row.ttfb_ms !== null &&
+        row.ttfb_ms !== undefined ||
+        row.page_bytes !== null &&
+        row.page_bytes !== undefined ||
+        row.requests_count !== null &&
+        row.requests_count !== undefined
+    );
+
+    return latestWithCoreMetrics ?? dailyPerf[0];
   }, [dailyPerf]);
 
   const siteReport = useMemo(() => {
@@ -485,85 +505,82 @@ console.log("perfRes.error:", perfRes.error);
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="rounded-xl border-border/50">
-  <CardHeader>
-    <CardTitle>Daily Performance Snapshot</CardTitle>
-  </CardHeader>
-  <CardContent>
-    {loading ? (
-      <div className="text-sm text-muted-foreground">Loading…</div>
-    ) : dailyPerf.length === 0 ? (
-      <div className="text-sm text-muted-foreground">
-        No performance data yet.
-      </div>
-    ) : (
-      (() => {
-        const latest = dailyPerf[0];
+          <CardHeader>
+            <CardTitle>Daily Performance Snapshot</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-sm text-muted-foreground">Loading…</div>
+            ) : dailyPerf.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                No performance data yet.
+              </div>
+            ) : (
+              (() => {
+                const latest = latestSnapshot;
 
-const latestTime = latest?.measured_at
-  ? new Date(latest.measured_at).toLocaleString()
-  : null;
+                if (!latest) {
+                  return (
+                    <div className="text-sm text-muted-foreground">
+                      No performance data yet.
+                    </div>
+                  );
+                }
 
-const latestSource = latest?.source || "unknown";
+                const latestTime = latest.measured_at
+                  ? new Date(latest.measured_at).toLocaleString()
+                  : null;
 
-return (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                const latestSource = latest.source || "unknown";
 
-    {/* Load Time */}
-    <div>
-      <div className="text-muted-foreground">Load Time</div>
-      <div className="font-semibold">
-        {latest.load_ms !== null && latest.load_ms !== undefined
-  ? `${latest.load_ms}ms`
-  : "--"}
-      </div>
-    </div>
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">Load Time</div>
+                      <div className="font-semibold">
+                        {latest.load_ms !== null && latest.load_ms !== undefined
+                          ? `${latest.load_ms}ms`
+                          : "--"}
+                      </div>
+                    </div>
 
-    {/* TTFB */}
-    <div>
-      <div className="text-muted-foreground">TTFB</div>
-      <div className="font-semibold">
-        {latest.ttfb_ms !== null && latest.ttfb_ms !== undefined
-  ? `${latest.ttfb_ms}ms`
-  : "--"}
-      </div>
-    </div>
+                    <div>
+                      <div className="text-muted-foreground">TTFB</div>
+                      <div className="font-semibold">
+                        {latest.ttfb_ms !== null && latest.ttfb_ms !== undefined
+                          ? `${latest.ttfb_ms}ms`
+                          : "--"}
+                      </div>
+                    </div>
 
-    {/* Page Size */}
-    <div>
-      <div className="text-muted-foreground">Page Size</div>
-      <div className="font-semibold">
-        {latest.page_bytes !== null && latest.page_bytes !== undefined
-  ? `${(latest.page_bytes / 1024).toFixed(1)} KB`
-  : "--"}
-      </div>
-    </div>
+                    <div>
+                      <div className="text-muted-foreground">Page Size</div>
+                      <div className="font-semibold">
+                        {latest.page_bytes !== null && latest.page_bytes !== undefined
+                          ? `${(latest.page_bytes / 1024).toFixed(1)} KB`
+                          : "--"}
+                      </div>
+                    </div>
 
-    {/* Requests */}
-    <div>
-      <div className="text-muted-foreground">Requests</div>
-      <div className="font-semibold">
-       {latest.requests_count !== null && latest.requests_count !== undefined
-  ? latest.requests_count
-  : "--"}
-      </div>
-    </div>
+                    <div>
+                      <div className="text-muted-foreground">Requests</div>
+                      <div className="font-semibold">
+                        {latest.requests_count !== null && latest.requests_count !== undefined
+                          ? latest.requests_count
+                          : "--"}
+                      </div>
+                    </div>
 
-    {/* ✅ NEW INFO (FIXED) */}
-    <div className="col-span-2 md:col-span-4 mt-2 text-xs text-muted-foreground">
-      {latestTime && (
-        <p>Last measured: {latestTime}</p>
-      )}
-      {latestSource && (
-        <p>Source: {latestSource}</p>
-      )}
-    </div>
-
-  </div>
-);
-      })()
-    )}
-  </CardContent>
-</Card>
+                    <div className="col-span-2 md:col-span-4 mt-2 text-xs text-muted-foreground">
+                      {latestTime && <p>Last measured: {latestTime}</p>}
+                      {latestSource && <p>Source: {latestSource}</p>}
+                    </div>
+                  </div>
+                );
+              })()
+            )}
+          </CardContent>
+        </Card>
 
         <Card className="rounded-xl border-border/50">
           <CardHeader className="pb-2">
